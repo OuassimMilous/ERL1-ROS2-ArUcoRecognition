@@ -37,7 +37,7 @@ install(DIRECTORY
 install(
   PROGRAMS
     scripts/NodeA.py
-    scripts/main.py
+    scripts/NodeB.py
     
   DESTINATION lib/${PROJECT_NAME}
 )
