@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-import rclpy
-from rclpy.node import Node
-from geometry_msgs.msg import Twist
-from sensor_msgs.msg import Image  
-from ros2_aruco_interfaces.msg import ArucoMarkers
-from cv_bridge import CvBridge
-import cv2
-import math
-import numpy as np
+import rclpy  # ROS 2 Python client library
+from rclpy.node import Node  # Base class for ROS 2 nodes
+from geometry_msgs.msg import Twist  # Message type for robot velocity commands
+from sensor_msgs.msg import Image  # Message type for image data
+from ros2_aruco_interfaces.msg import ArucoMarkers  # Custom message type for ArUco marker data
+from cv_bridge import CvBridge  # Library to convert ROS Image messages to OpenCV images
+import cv2  # OpenCV library for computer vision tasks
+import math  # Python math library
+import numpy as np  # Numpy library for numerical operations
 
 # Define names of each possible ArUco tag OpenCV supports
 ARUCO_DICT = {
@@ -38,16 +38,16 @@ class CmdVelPublisher(Node):
     def __init__(self):
         super().__init__('cmd_vel_publisher')
 
-        # Create publisher for cmd_vel
+        # Create publisher for cmd_vel topic to send velocity commands
         self.publisher_ = self.create_publisher(Twist, '/cmd_vel', 10)
         
-        # Create a publisher for the custom results_images topic
+        # Create a publisher for the results_images topic to send processed images
         self.results_publisher_ = self.create_publisher(Image, '/results_images', 10)
         
         # Create a timer to periodically publish messages
         self.timer = self.create_timer(1, self.publish_vel)
 
-        # Create subscriber for /aruco_markers topic
+        # Create subscriber for /aruco_markers topic to receive ArUco marker data
         self.subscriber_ = self.create_subscription(
             ArucoMarkers, 
             '/aruco_markers',
@@ -55,7 +55,7 @@ class CmdVelPublisher(Node):
             10
         )
 
-        # Create subscriber for /camera/image_raw topic
+        # Create subscriber for /camera/image_raw topic to receive raw image data
         self.image_subscriber_ = self.create_subscription(
             Image,
             '/camera/image_raw',
@@ -63,12 +63,12 @@ class CmdVelPublisher(Node):
             10
         )
 
-        # Track marker ID sequence
+        # Sequence of marker IDs to detect in order
         self.marker_sequence = [11, 12, 13, 14, 15]
-        self.current_marker_index = 0
-        self.finished = False
+        self.current_marker_index = 0  # Index to track the current marker in sequence
+        self.finished = False  # Flag to indicate when all markers are detected
         
-        self.bridge = CvBridge()
+        self.bridge = CvBridge()  # Bridge to convert between ROS Image messages and OpenCV images
 
         # Store the last received image and synchronization flag
         self.latest_image = None
@@ -150,7 +150,7 @@ class CmdVelPublisher(Node):
         self.latest_image = msg
         self.image_ready = True
 
-rclpy.init()
-node = CmdVelPublisher()
+rclpy.init()  # Initialize the ROS 2 Python client library
+node = CmdVelPublisher()  # Create an instance of the CmdVelPublisher node
 
-rclpy.spin(node)
+rclpy.spin(node)  # Keep the node running until it is manually stopped

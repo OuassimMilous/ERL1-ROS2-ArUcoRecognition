@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3 
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
@@ -8,7 +8,8 @@ from cv_bridge import CvBridge
 import cv2
 import math
 import numpy as np
-from std_msgs.msg import Float64
+# from std_msgs.msg import Float64
+from std_msgs.msg import Float64MultiArray, String
 
 # Define names of each possible ArUco tag OpenCV supports
 ARUCO_DICT = {
@@ -39,8 +40,8 @@ class CmdVelPublisher(Node):
     def __init__(self):
         super().__init__('camera_joint_publisher')
 
-        # Create publisher for camera joint controller
-        self.publisher_ = self.create_publisher(Float64, '/robot4/camera_controller/command', 10)
+        # Create a publisher for the joint velocity controller
+        self.publisher_ = self.create_publisher(Float64MultiArray, 'joint_velocity_controller/commands', 10) 
 
         # Create a publisher for the custom results_images topic
         self.results_publisher_ = self.create_publisher(Image, '/results_images', 10)
@@ -48,7 +49,7 @@ class CmdVelPublisher(Node):
         # Create a timer to periodically publish messages at 1Hz
         self.timer = self.create_timer(1.0, self.publish_joint_position)  # Timer set to 1 second interval
 
-        # Create subscriber for /aruco_markers topic
+        # Create a subscriber for the /aruco_markers topic
         self.subscriber_ = self.create_subscription(
             ArucoMarkers, 
             '/aruco_markers',
@@ -56,7 +57,7 @@ class CmdVelPublisher(Node):
             10
         )
 
-        # Create subscriber for /camera/image_raw topic
+        # Create a subscriber for the /camera/image_raw topic
         self.image_subscriber_ = self.create_subscription(
             Image,
             '/camera/image_raw',
@@ -64,41 +65,36 @@ class CmdVelPublisher(Node):
             10
         )
 
-        # Track marker ID sequence
+        # Track the marker ID sequence to be detected
         self.marker_sequence = [11, 12, 13, 14, 15]
         self.current_marker_index = 0
-        self.finished = False
+        self.finished = False  # Flag to indicate when all markers are found
         
-        self.bridge = CvBridge()
+        self.bridge = CvBridge()  # Bridge to convert between ROS Image messages and OpenCV images
 
-        # Store the last received image and synchronization flag
+        # Store the last received image and a synchronization flag
         self.latest_image = None
         self.image_ready = False
-        self.current_angle = 0.0  # Initialize to 0
 
     def publish_joint_position(self):
-        # If finished, stop publishing joint position (set it to 0)
+        # If finished, stop publishing joint position by setting it to 0
         if self.finished:
-            msg = Float64()
-            msg.data = 0.0  # Stop the movement
-            self.publisher_.publish(msg)
-            self.get_logger().info(f'Published: Joint position={msg.data} (Finished)')
+            commands = Float64MultiArray()
+            commands.data = [0.0]
+            self.publisher_.publish(commands)
+            self.get_logger().info(f'Published: Joint position={commands.data} (Finished)')
         else:
-            # Continue publishing joint position at 1Hz with an angle change of 0.5
-            self.current_angle += 6.0  # Increment angle by 6.0 degrees
-            if self.current_angle > 360:
-                self.current_angle = self.current_angle % 360  # Reset after a full turn
-
-            msg = Float64()
-            msg.data = math.radians(self.current_angle)  # Convert to radians
-            self.publisher_.publish(msg)
-            self.get_logger().info(f'Published: Joint position={msg.data} (Angle={self.current_angle})')
+            # Continue publishing joint position at 1Hz with an angle change of 0.4
+            commands = Float64MultiArray()
+            commands.data = [0.4]
+            self.publisher_.publish(commands)
+            self.get_logger().info(f'Published: Joint position={commands.data} )')
 
     def marker_callback(self, msg):
         if self.finished or not self.image_ready:
             return
 
-        # Look for the current marker in the sequence
+        # Check for the current marker in the sequence
         if self.marker_sequence[self.current_marker_index] in msg.marker_ids:
             marker_id = self.marker_sequence[self.current_marker_index]
             self.get_logger().info(f'Found Marker ID: {marker_id}')
@@ -124,11 +120,11 @@ class CmdVelPublisher(Node):
                     # Calculate the center of the marker
                     center = np.mean(my_corners, axis=0).astype(int)
 
-                    # Calculate the radius of the circle
+                    # Calculate the radius of the circle to be drawn around the marker
                     distances = np.linalg.norm(my_corners - center, axis=1)
                     radius = int(math.ceil(np.max(distances)))
 
-                    # Draw the circle and the center point
+                    # Draw the circle and the center point on the image
                     frame = cv2.circle(frame, tuple(center), radius=radius, color=(0, 0, 255), thickness=5)
                     frame = cv2.circle(frame, tuple(center), radius=5, color=(255, 0, 0), thickness=-1)
                     detected = True
@@ -143,20 +139,22 @@ class CmdVelPublisher(Node):
             # Move to the next marker in the sequence
             self.current_marker_index += 1
 
-            # If all markers are found, stop sending angular velocity
+            # If all markers are found, set the finished flag to stop publishing commands
             if self.current_marker_index == len(self.marker_sequence):
                 self.get_logger().info('FINISHED')
-                self.finished = True  # Stop sending angular velocity
+                self.finished = True
 
-            # Reset the image flag to ensure new images are processed
+            # Reset the image flag to process new images
             self.image_ready = False
 
     def image_callback(self, msg):
-        # Store the latest image received and set the flag
+        # Store the latest image received and set the flag to indicate image readiness
         self.latest_image = msg
         self.image_ready = True
 
+# Initialize the ROS client library
 rclpy.init()
+# Create the CmdVelPublisher node
 node = CmdVelPublisher()
-
+# Spin the node to keep it running
 rclpy.spin(node)

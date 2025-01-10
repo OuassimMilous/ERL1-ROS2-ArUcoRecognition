@@ -1,8 +1,6 @@
 <?xml version="1.0"?>
 <robot>
   <!-- materials -->
- 
-  
   <gazebo reference="link_chassis">
     <material>Gazebo/Orange</material>
   </gazebo>
@@ -44,18 +42,6 @@
 </plugin>
 </gazebo>
 
-
-  <!-- ros_control plugin -->
-    <gazebo>
-    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
-      <robotNamespace>robot4</robotNamespace>
-      <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
-      <legacyModeNS>true</legacyModeNS>
-    </plugin>
-  </gazebo>
-
-
-
 <gazebo reference="camera_link">
     <sensor type="camera" name="camera">
         <always_on>true</always_on>
@@ -76,29 +62,21 @@
                 <center>0.5 0.5</center>
             </distortion>
         </camera>
-        <plugin name="plugin_name" filename="libgazebo_ros_camera.so">
+        <plugin name="cam_controller" filename="libgazebo_ros_camera.so">
             <ros>
                 <remapping>~/image_raw:=image_raw</remapping>
                 <remapping>~/camera_info:=camera_info</remapping>
             </ros>
             <camera_name>camera</camera_name>
             <frame_name>camera_link</frame_name>
-        </plugin>
-              <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
-        <alwaysOn>true</alwaysOn>
-        <updateRate>0.0</updateRate>
-        <cameraName>robot/camera1</cameraName>
-        <imageTopicName>image_raw</imageTopicName>
-        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
-        <frameName>camera_link</frameName>
-        <hackBaseline>0.07</hackBaseline>
-        <distortionK1>0.0</distortionK1>
-        <distortionK2>0.0</distortionK2>
-        <distortionK3>0.0</distortionK3>
-        <distortionT1>0.0</distortionT1>
-        <distortionT2>0.0</distortionT2>
-      </plugin>
+    </plugin>
     </sensor>
+  </gazebo>
+
+<gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros2_control.so">
+        <parameters>$(find robot_urdf)/config/config.yaml</parameters>
+    </plugin>
 </gazebo>
 
 </robot>
