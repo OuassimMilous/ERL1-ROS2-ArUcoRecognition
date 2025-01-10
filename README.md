@@ -15,7 +15,7 @@ This project is developed by:
 
 - Clone the packages required for the project inside src folder of your ros2 workspace
 ```
-git clone https://github.com/OuassimMilous/ERL-assignment2-ROS-PLANNING-AND-SLAM
+git clone https://github.com/OuassimMilous/Experimental-Robotics-Lab---ROS2-Open-CV-ArUco-recognition
 git clone https://github.com/carmineD8/ros2_aruco
 ```
 
