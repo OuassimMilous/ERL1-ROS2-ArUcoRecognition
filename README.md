@@ -1,4 +1,4 @@
-# Experimental Robotics Laboratory - Assignment 1 ROS2 OpenCV and Aruco Recognition
+# Experimental Robotics Laboratory - Assignment 1 ROS2 Aruco Recognition Using OpenCV
 
 In this project a mobile robot is that rotates and scans 5 aruco markers and drawas a circle aroun dthem and publishes the image.
 
